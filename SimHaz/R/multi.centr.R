@@ -17,9 +17,9 @@ simulWeib.multicentre<-function(N,duration,rho,beta,rateC,df,min.futime)
       pats_grp<-rmultinom(n=1,size=N,prob=df$cat_prop)
     }else{
       if(sum(df$centre.size) != N){stop("N != sum(df$m)")}
-      pats_grp<-df$m
+      pats_grp<-matrix(df$centre.size)
     }
-    clst_id<-unlist(mapply(rep,df$cat_id,pats_grp))
+    clst_id<-rep(df$cat_id,pats_grp)
     start<-rep(0,N)
     for(i in 1:length(pats_grp)){
       expose_i<-rbinom(n=sum(clst_id==df$cat_id[i]),size=1,prob=df$cat_exp.prop[i])
@@ -30,7 +30,6 @@ simulWeib.multicentre<-function(N,duration,rho,beta,rateC,df,min.futime)
       C<-pmin(C,rep(duration,length(C)))
       time_i<-pmin(Tlat,C)    
       status_i<-as.numeric(Tlat<=C)
-      
       expose<-c(expose,expose_i)
       time<-c(time,time_i)
       status<-c(status,status_i)
@@ -51,7 +50,7 @@ simulWeib.multicentre<-function(N,duration,rho,beta,rateC,df,min.futime)
 tdSim.multicentre<-function(N,duration=24,rho=1,beta,rateC,df,
                      prop.fullexp=0,maxrelexptime=1,min.futime=0,min.postexp.futime=0){
   data<-simulWeib.multicentre(N,duration,rho,beta,rateC,df,min.futime)
-  if(sum(df$cat_prop)==1 & N>=nrow(df)){
+  if(N>=nrow(df)){
     if(prop.fullexp==0){
       data_tdexposed<-data[data$x==1,]
     }
@@ -163,6 +162,9 @@ getpower.multicentre<-function(nSim,N,duration=24,rho=1,beta,med.TimeToCensor=14
     }
     }
   }
+  if(is.null(df$cat_prop)){
+    df$cat_prop = rep(NA, length(df$cat_id))
+  }
   df=data.frame(i_scenario=scenario,
                 i_type=type,
                 i_N=N,
@@ -170,7 +172,7 @@ getpower.multicentre<-function(nSim,N,duration=24,rho=1,beta,med.TimeToCensor=14
                 i_min.postexp.futime=min.postexp.futime,
                 i_cat=df$cat_id,
                 i_cat_prop=df$cat_prop,
-                i_m = df$m,
+                i_centre.size = df$centre.size,
                 i_cat_exp.prop=df$cat_exp.prop,
                 i_exp.prop=sum(df$cat_prop*df$cat_exp.prop),
                 i_lambda=log(2)/df$med.TTE.Control,
