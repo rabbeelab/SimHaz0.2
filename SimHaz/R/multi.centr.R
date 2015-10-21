@@ -25,7 +25,7 @@ simulWeib.multicentre<-function(N,duration,rho,beta,rateC,df,min.futime, dist= N
       expose_i<-rbinom(n=sum(clst_id==df$cat_id[i]),size=1,prob=df$cat_exp.prop[i])
       v_i<-runif(n=sum(clst_id==df$cat_id[i]))
       
-      if(dist == NULL){
+      if(is.null(dist)){
           Tlat<-(-log(v_i)/(df$lambda[i]*exp(expose_i*beta)))^(1/rho)
       }
       
@@ -59,8 +59,8 @@ simulWeib.multicentre<-function(N,duration,rho,beta,rateC,df,min.futime, dist= N
 # modified version to generate time-dependent dataset with clustering
 #' @export
 tdSim.multicentre<-function(N,duration=24,rho=1,beta,rateC,df,
-                     prop.fullexp=0,maxrelexptime=1,min.futime=0,min.postexp.futime=0){
-  data<-simulWeib.multicentre(N,duration,rho,beta,rateC,df,min.futime)
+                     prop.fullexp=0,maxrelexptime=1,min.futime=0,min.postexp.futime=0, dist=NULL){
+  data<-simulWeib.multicentre(N,duration,rho,beta,rateC,df,min.futime, dist=dist)
   if(N>=nrow(df)){
     if(prop.fullexp==0){
       data_tdexposed<-data[data$x==1,]
@@ -99,7 +99,7 @@ tdSim.multicentre<-function(N,duration=24,rho=1,beta,rateC,df,
 
 # get.power function for clustering scenario
 #' @export
-getpower.multicentre<-function(nSim,N,duration=24,rho=1,beta,med.TimeToCensor=14,df,method,alpha=0.05, type,scenario,
+getpower.multicentre<-function(nSim,N,duration=24,rho=1,beta,med.TimeToCensor=14,df,dist=NULL, method,alpha=0.05, type,scenario,
                         prop.fullexp=0,maxrelexptime=1,min.futime=0,min.postexp.futime=0,output.fn,simu.plot=FALSE) 
 {
 #  lambda<-log(2)/med.TTE.Control
@@ -114,12 +114,12 @@ getpower.multicentre<-function(nSim,N,duration=24,rho=1,beta,med.TimeToCensor=14
     set.seed(999)
     if(type == "fixed"){
       dat <- simulWeib.multicentre(N=N,duration=duration,rho=rho,beta=beta,rateC=rateC,
-                            df=df,min.futime=min.futime)
+                            df=df,min.futime=min.futime, dist=dist)
     }
     else{
       dat <- tdSim.multicentre(N=N,duration=duration,rho=rho,beta=beta,rateC=rateC,
                         df=df,prop.fullexp=prop.fullexp,maxrelexptime=maxrelexptime,
-                        min.futime=min.futime,min.postexp.futime=min.postexp.futime)
+                        min.futime=min.futime,min.postexp.futime=min.postexp.futime, dist=dist)
     }
     plot_simuData(dat)
   }
@@ -128,12 +128,12 @@ getpower.multicentre<-function(nSim,N,duration=24,rho=1,beta,med.TimeToCensor=14
   {
     if(type == "fixed"){
       dat<-simulWeib.multicentre(N=N,duration=duration,rho=rho,beta=beta,rateC=rateC,
-                          df=df,min.futime=min.futime)
+                          df=df,min.futime=min.futime, dist=dist)
     }
     else{
       dat<-tdSim.multicentre(N=N,duration=duration,rho=rho,beta=beta,rateC=rateC,
                       df=df,prop.fullexp=prop.fullexp,maxrelexptime=maxrelexptime,
-                      min.futime=min.futime,min.postexp.futime=min.postexp.futime)  
+                      min.futime=min.futime,min.postexp.futime=min.postexp.futime,dist=dist)  
     }
     if(method != "frailty"){
       if(method == "cluster"){
