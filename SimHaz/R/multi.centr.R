@@ -1,6 +1,6 @@
 library(SimHaz)
 
-simulWeib.multicentre<-function(N,duration,rho,beta,rateC,df,min.futime)
+simulWeib.multicentre<-function(N,duration,rho,beta,rateC,df,min.futime, dist= NULL )
 { 
   df$lambda = log(2)/df$med.TTE.Control
   if(!is.null(df$cat_prop) && sum(df$cat_prop)!=1){
@@ -24,7 +24,18 @@ simulWeib.multicentre<-function(N,duration,rho,beta,rateC,df,min.futime)
     for(i in 1:length(pats_grp)){
       expose_i<-rbinom(n=sum(clst_id==df$cat_id[i]),size=1,prob=df$cat_exp.prop[i])
       v_i<-runif(n=sum(clst_id==df$cat_id[i]))
-      Tlat<-(-log(v_i)/(df$lambda[i]*exp(expose_i*beta)))^(1/rho)
+      
+      if(dist == NULL){
+          Tlat<-(-log(v_i)/(df$lambda[i]*exp(expose_i*beta)))^(1/rho)
+      }
+      
+      else if(dist == 'gamma'){
+          gam_mean = 1
+          gam_var = 2
+          gam = rgamma(1,shape = 1/2, scale=2)
+          Tlat<-(-log(v_i)/(df$lambda[i]*exp(expose_i*beta+gam)))^(1/rho)
+      }
+      
       
       C<-rexp(n=sum(clst_id==df$cat_id[i]),rate=rateC)
       C<-pmin(C,rep(duration,length(C)))
