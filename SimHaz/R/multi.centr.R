@@ -1,54 +1,24 @@
 library(SimHaz)
 
-input_df <- data.frame(cat_id = c('lo', 'med', 'hi'), 
-                       cat_prop = c(0.65, 0.2, 0.15), cat_exp.prop = c(0.1, 0.3, 0.5),
-                       med.TTE.Control=c(14,24,34))
-
-dat <- tdSim.multicentre(N = 600, duration = 24, rho = 1,
-                  beta = 0.3, rateC = log(2)/14, df = input_df, prop.fullexp = 0,
-                  maxrelexptime = 1/6, min.futime = 4, min.postexp.futime = 4)
-
-plot_simuData(dat)
-
-input_df <- data.frame(cat_id = c('lo', 'med', 'hi'), 
-                       cat_prop = c(0.65, 0.2, 0.15), cat_exp.prop = c(1/3, 1/3, 1/3),
-                       med.TTE.Control=c(14,24,34))
-input_df <- data.frame(cat_id = c('lo', 'med', 'hi'), 
-                       cat_prop = c(0.65, 0.2, 0.15), cat_exp.prop = c(0.1, 0.3, 0.5),
-                       med.TTE.Control=c(24,24,24))
-input_df <- data.frame(cat_id = c('1', '2', '3','4','5'), 
-                       cat_prop = c(0.2, 0.2, 0.2,0.2,0.2), cat_exp.prop = c(0.3, 0.3, 0.3,0.3,0.3),
-                       med.TTE.Control=c(10,15,20,25,30))
-
-df_clust <- getpower.multicentre(nSim = 500, N = 600, beta = 0.4, df = input_df,method="cluster",
-                               type = "td", scenario = "clustering", maxrelexptime = 1/6, min.futime = 4,
-                               min.postexp.futime = 4, output.fn = "output_mult.csv",)
-df_strat <- getpower.multicentre(nSim = 500, N = 600, beta = 0.4, df = input_df,method="strata",
-                                 type = "td", scenario = "strata", maxrelexptime = 1/6, min.futime = 4,
-                                 min.postexp.futime = 4, output.fn = "output_mult.csv",)
-df_frailty <- getpower.multicentre(nSim = 500, N = 600, beta = 0.4, df = input_df,method="frailty",
-                                 type = "td", scenario = "frailty", maxrelexptime = 1/6, min.futime = 4,
-                                 min.postexp.futime = 4, output.fn = "output_mult.csv",)
-df_normal <- getpower.multicentre(nSim = 500, N = 600, beta = 0.4, df = input_df,method="normal",
-                                 type = "td", scenario = "normal", maxrelexptime = 1/6, min.futime = 4,
-                                 min.postexp.futime = 4, output.fn = "output_mult.csv",)
-
-
-
 simulWeib.multicentre<-function(N,duration,rho,beta,rateC,df,min.futime)
 { 
   df$lambda = log(2)/df$med.TTE.Control
-  if(sum(df$cat_prop)!=1){
-    cat("Error: proportions of patients do not sum to 1")
+  if(!is.null(df$cat_prop) && sum(df$cat_prop)!=1){
+    stop("Error: proportions of patients do not sum to 1")
   }
   else if(N<nrow(df)){
-    cat("Error: not enough number of patients")
+    stop("Error: not enough number of patients")
   }
   else{
     expose<-NULL
     time<-NULL
     status<-NULL
-    pats_grp<-rmultinom(n=1,size=N,prob=df$cat_prop)
+    if(is.null(df$centre.size)){
+      pats_grp<-rmultinom(n=1,size=N,prob=df$cat_prop)
+    }else{
+      if(sum(df$centre.size) != N){stop("N != sum(df$m)")}
+      pats_grp<-df$m
+    }
     clst_id<-unlist(mapply(rep,df$cat_id,pats_grp))
     start<-rep(0,N)
     for(i in 1:length(pats_grp)){
@@ -200,6 +170,7 @@ getpower.multicentre<-function(nSim,N,duration=24,rho=1,beta,med.TimeToCensor=14
                 i_min.postexp.futime=min.postexp.futime,
                 i_cat=df$cat_id,
                 i_cat_prop=df$cat_prop,
+                i_m = df$m,
                 i_cat_exp.prop=df$cat_exp.prop,
                 i_exp.prop=sum(df$cat_prop*df$cat_exp.prop),
                 i_lambda=log(2)/df$med.TTE.Control,
