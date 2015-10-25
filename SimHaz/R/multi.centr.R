@@ -136,14 +136,15 @@ getpower.multicentre<-function(nSim,N,duration=24,rho=1,beta,med.TimeToCensor=14
                       min.futime=min.futime,min.postexp.futime=min.postexp.futime,dist=dist)  
     }
     if(method != "frailty"){
-      if(method == "cluster"){
-        stop("Not implemented")
+      if(method == "marginal"){
+        fit <- coxph(Surv(start,stop, status) ~ factor(x)+cluster(clst_id), data=dat)
+        sfit <- survfit(Surv(start,stop, status) ~ factor(x)+cluster(clst_id), data=dat)
       }
       else if(method == "strata"){
         fit <- coxph(Surv(start,stop, status) ~ factor(x)+strata(clst_id), data=dat)
         sfit <- survfit(Surv(start,stop, status) ~ factor(x)+strata(clst_id), data=dat)
       }
-      else if(method == "normal"){
+      else if(method == "Model with Independence Assumption"){
         fit <- coxph(Surv(start,stop, status) ~ factor(x), data=dat)
         sfit <- survfit(Surv(start,stop, status) ~ factor(x), data=dat)
       }
@@ -156,7 +157,7 @@ getpower.multicentre<-function(nSim,N,duration=24,rho=1,beta,med.TimeToCensor=14
       res[k,"medsurvt_c"] <- summary(sfit)$table[1,'median']
       res[k,"medsurvt_exp"] <- summary(sfit)$table[2,'median']
     }
-    else{
+    else if(method == "frailty"){
       fit <- coxph(Surv(start,stop, status) ~ factor(x)+frailty(clst_id), data=dat)
       sfit <- survfit(Surv(start,stop, status) ~ factor(x)+frailty(clst_id), data=dat)
       res[k,"betahat"] <- summary(fit)$coef[,"coef"]["factor(x)1"]
@@ -171,6 +172,8 @@ getpower.multicentre<-function(nSim,N,duration=24,rho=1,beta,med.TimeToCensor=14
       N.eff[k,j]<-length(unique(dat[dat$clst_id==df$cat_id[j],]$id))
       N.effexp.p[k,j]<-sum(dat[dat$clst_id==df$cat_id[j],]$x)/length(unique(dat[dat$clst_id==df$cat_id[j],]$id))
     }
+    }else{
+      stop("Method not implemented")
     }
   }
   if(is.null(df$cat_prop)){
